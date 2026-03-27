@@ -61,3 +61,14 @@ def calculate_macd(df) -> pd.DataFrame:
     return df
 
 btc = calculate_macd(btc)
+
+#ATR (average true range)
+def calculate_atr(df, period=14) -> pd.DataFrame:
+    df['H-L'] = df['High'] - df['Low']
+    df['H-PC'] = abs(df['High'] - df['Close'].shift(1))
+    df['L-PC'] = abs(df['Low'] - df['Close'].shift(1))
+    df['TR'] = df[['H-L', 'H-PC', 'L-PC']].max(axis=1)
+    df['ATR'] = df['TR'].rolling(window=period).mean()
+    return df
+
+btc = calculate_atr(btc)
