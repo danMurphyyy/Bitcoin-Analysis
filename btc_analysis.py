@@ -72,3 +72,14 @@ def calculate_atr(df, period=14) -> pd.DataFrame:
     return df
 
 btc = calculate_atr(btc)
+
+#identify support and resistance levels
+def identify_support_resistance(df) -> pd.DataFrame:
+    peaks_high, _ = find_peaks(df['High'], distance=20, prominence=df['High'].std())
+    peaks_low, _ = find_peaks(-df['Low'], distance=20, prominence=df['Low'].std())
+
+    resistance_levels = df['High'].iloc[peaks_high].nlargest(3).values
+    support_levels = df['Low'].iloc[peaks_low].nsmallest(3).values
+    return df, resistance_levels, support_levels
+
+btc, btc_resistance_levels, btc_support_levels = identify_support_resistance(btc)
