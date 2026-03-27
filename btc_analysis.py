@@ -39,3 +39,25 @@ def calculate_bollinger_bands(df) -> pd.DataFrame:
     return df
 
 btc = calculate_bollinger_bands(btc)
+
+#RSI
+def calculate_rsi(df, period=14) -> pd.DataFrame:
+    delta = df['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    rs = gain / loss
+    df['RSI'] = 100 - (100 / (1 + rs))
+    return df
+
+btc = calculate_rsi(btc)
+
+#MACD
+def calculate_macd(df) -> pd.DataFrame:
+    exp1 = df['Close'].ewm(span=12, adjust=False).mean()
+    exp2 = df['Close'].ewm(span=26, adjust=False).mean()
+    df['MACD'] = exp1 - exp2
+    df['MACD_Signal'] = df['MACD'].ewm(span=9).mean()
+    df['MACD_Hist'] = df['MACD'] - df['MACD_Signal']
+    return df
+
+btc = calculate_macd(btc)
