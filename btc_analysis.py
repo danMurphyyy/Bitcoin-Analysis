@@ -97,3 +97,17 @@ def print_values(df, resistance_levels, support_levels):
     print("Support Levels:", support_levels)
 
 print_values(btc, btc_resistance_levels, btc_support_levels)
+
+#create a comprehensive chart
+def create_comprehensive_chart() -> go.Figure:
+    fig = make_subplots(
+        rows=5, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        row_heights=[0.4, 0.15, 0.15, 0.15, 0.15],
+        subplot_titles=("BTC Price with SMAs and Bollinger Bands", "Volume", "RSI", "MACD", "ATR")
+    )
+    return fig
+
+fig = create_comprehensive_chart()
+
