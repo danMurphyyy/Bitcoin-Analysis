@@ -1,7 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 
-from openbb import openbb
+from openbb import obb
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -14,7 +14,21 @@ pd.set_option('display.precision', 4)
 
 #fetch crypto data
 def fetch_crypto_data(symbol) -> pd.DataFrame:
-    crypto_data = openbb.crypto.historical(symbol, provider='yfinance', start_date=datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d").to_df()
+    start_date = (datetime.now() - timedelta(days=365)).date().isoformat()
+    crypto_data = obb.crypto.price.historical(
+        symbol,
+        provider='yfinance',
+        start_date=start_date
+    ).to_df()
+    crypto_data = crypto_data.rename(
+        columns={
+            'open': 'Open',
+            'high': 'High',
+            'low': 'Low',
+            'close': 'Close',
+            'volume': 'Volume',
+        }
+    )
     return crypto_data
 
 #Calculate technical indicators
@@ -61,7 +75,7 @@ def calculate_atr(df, period=14) -> pd.DataFrame:
     return df
 
 #identify support and resistance levels
-def identify_support_resistance(df) -> pd.DataFrame:
+def identify_support_resistance(df) -> pd.DataFrame, list, list:
     peaks_high, _ = find_peaks(df['High'], distance=20, prominence=df['High'].std())
     peaks_low, _ = find_peaks(-df['Low'], distance=20, prominence=df['Low'].std())
 
