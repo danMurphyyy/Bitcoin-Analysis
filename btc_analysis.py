@@ -83,3 +83,17 @@ def identify_support_resistance(df) -> pd.DataFrame:
     return df, resistance_levels, support_levels
 
 btc, btc_resistance_levels, btc_support_levels = identify_support_resistance(btc)
+
+def print_values(df, resistance_levels, support_levels):
+    print("Latest BTC Price:", df['Close'].iloc[-1])
+    print("20-day SMA:", df['SMA_20'].iloc[-1])
+    print("50-day SMA:", df['SMA_50'].iloc[-1])
+    print("200-day SMA:", df['SMA_200'].iloc[-1])
+    print("Bollinger Band Width:", df['BB_Width'].iloc[-1])
+    print(f"RSI: {df['RSI'].iloc[-1]:.2f} {'(Overbought)' if df['RSI'].iloc[-1] > 70 else '(Oversold)' if df['RSI'].iloc[-1] < 30 else ''}")
+    print(f"MACD: {df['MACD'].iloc[-1]:.2f} {'(Bullish)' if df['MACD'].iloc[-1] > df['MACD_Signal'].iloc[-1] else '(Bearish)'}")
+    print(f"ATR: {df['ATR'].iloc[-1]:.2f}")
+    print("Resistance Levels:", resistance_levels)
+    print("Support Levels:", support_levels)
+
+print_values(btc, btc_resistance_levels, btc_support_levels)
