@@ -3,7 +3,6 @@ warnings.filterwarnings("ignore")
 
 from openbb import openbb
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
@@ -18,16 +17,12 @@ def fetch_crypto_data(symbol) -> pd.DataFrame:
     crypto_data = openbb.crypto.historical(symbol, provider='yfinance', start_date=datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d").to_df()
     return crypto_data
 
-btc = fetch_crypto_data('BTC-USD')
-
 #Calculate technical indicators
 def calculate_technical_indicators(df) -> pd.DataFrame:
     df['SMA_20'] = df['Close'].rolling(window=20).mean()
     df['SMA_50'] = df['Close'].rolling(window=50).mean()
     df['SMA_200'] = df['Close'].rolling(window=200).mean()
     return df
-
-btc = calculate_technical_indicators(btc)
 
 #Bollinger Bands
 def calculate_bollinger_bands(df) -> pd.DataFrame:
@@ -38,8 +33,6 @@ def calculate_bollinger_bands(df) -> pd.DataFrame:
     df['BB_Width'] = df['BB_Upper'] - df['BB_Lower']
     return df
 
-btc = calculate_bollinger_bands(btc)
-
 #RSI
 def calculate_rsi(df, period=14) -> pd.DataFrame:
     delta = df['Close'].diff()
@@ -48,8 +41,6 @@ def calculate_rsi(df, period=14) -> pd.DataFrame:
     rs = gain / loss
     df['RSI'] = 100 - (100 / (1 + rs))
     return df
-
-btc = calculate_rsi(btc)
 
 #MACD
 def calculate_macd(df) -> pd.DataFrame:
@@ -60,8 +51,6 @@ def calculate_macd(df) -> pd.DataFrame:
     df['MACD_Hist'] = df['MACD'] - df['MACD_Signal']
     return df
 
-btc = calculate_macd(btc)
-
 #ATR (average true range)
 def calculate_atr(df, period=14) -> pd.DataFrame:
     df['H-L'] = df['High'] - df['Low']
@@ -71,8 +60,6 @@ def calculate_atr(df, period=14) -> pd.DataFrame:
     df['ATR'] = df['TR'].rolling(window=period).mean()
     return df
 
-btc = calculate_atr(btc)
-
 #identify support and resistance levels
 def identify_support_resistance(df) -> pd.DataFrame:
     peaks_high, _ = find_peaks(df['High'], distance=20, prominence=df['High'].std())
@@ -81,8 +68,6 @@ def identify_support_resistance(df) -> pd.DataFrame:
     resistance_levels = df['High'].iloc[peaks_high].nlargest(3).values
     support_levels = df['Low'].iloc[peaks_low].nsmallest(3).values
     return df, resistance_levels, support_levels
-
-btc, btc_resistance_levels, btc_support_levels = identify_support_resistance(btc)
 
 def print_values(df, resistance_levels, support_levels):
     print("Latest BTC Price:", df['Close'].iloc[-1])
@@ -96,8 +81,6 @@ def print_values(df, resistance_levels, support_levels):
     print("Resistance Levels:", resistance_levels)
     print("Support Levels:", support_levels)
 
-print_values(btc, btc_resistance_levels, btc_support_levels)
-
 #create a comprehensive chart
 def create_comprehensive_chart() -> go.Figure:
     fig = make_subplots(
@@ -109,5 +92,73 @@ def create_comprehensive_chart() -> go.Figure:
     )
     return fig
 
-fig = create_comprehensive_chart()
+#Price with SMAs and Bollinger Bands
+def add_price_chart(fig, df):
+    fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Price'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['SMA_20'], mode='lines', name='SMA 20', line=dict(color='blue')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['SMA_50'], mode='lines', name='SMA 50', line=dict(color='orange')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['SMA_200'], mode='lines', name='SMA 200', line=dict(color='green')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['BB_Upper'], mode='lines', name='Bollinger Upper', line=dict(color='red', dash='dash')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['BB_Lower'], mode='lines', name='Bollinger Lower', line=dict(color='red', dash='dash')), row=1, col=1)
 
+# add support and resistance levels
+def add_support_resistance(fig, df, resistance_levels, support_levels):
+    for level in resistance_levels:
+        fig.add_trace(go.Scatter(x=df.index, y=[level]*len(df), mode='lines', name='Resistance', line=dict(color='red', dash='dot')), row=1, col=1)
+    for level in support_levels:
+        fig.add_trace(go.Scatter(x=df.index, y=[level]*len(df), mode='lines', name='Support', line=dict(color='green', dash='dot')), row=1, col=1)
+
+# add volume
+def add_volume_chart(fig, df):
+    fig.add_trace(go.Bar(x=df.index, y=df['Volume'], name='Volume', marker_color='lightblue'), row=2, col=1)
+
+# add RSI
+def add_rsi_chart(fig, df):
+    fig.add_trace(go.Scatter(x=df.index, y=df['RSI'], mode='lines', name='RSI', line=dict(color='purple')), row=3, col=1)
+    fig.add_hline(y=70, line=dict(color='red', dash='dash'), row=3, col=1)
+    fig.add_hline(y=30, line=dict(color='green', dash='dash'), row=3, col=1)
+
+# add MACD
+def add_macd_chart(fig, df):
+    fig.add_trace(go.Scatter(x=df.index, y=df['MACD'], mode='lines', name='MACD', line=dict(color='blue')), row=4, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['MACD_Signal'], mode='lines', name='MACD Signal', line=dict(color='orange')), row=4, col=1)
+    fig.add_trace(go.Bar(x=df.index, y=df['MACD_Hist'], name='MACD Histogram', marker_color='lightblue'), row=4, col=1)
+
+# add ATR
+def add_atr_chart(fig, df):
+    fig.add_trace(go.Scatter(x=df.index, y=df['ATR'], mode='lines', name='ATR', line=dict(color='brown')), row=5, col=1)
+
+def finalize_chart(fig):
+    fig.update_layout(title='BTC Technical Analysis', xaxis_title='Date', yaxis_title='Price', height=1400, showlegend=False, xaxis_rangeslider_visible=False)
+    fig.update_xaxes(title_text = "Price (USD)", row=1, col=1)
+    fig.update_yaxes(title_text = "Volume", row=2, col=1)
+    fig.update_yaxes(title_text = "RSI", row=3, col=1)
+    fig.update_yaxes(title_text = "MACD", row=4, col=1)
+    fig.update_yaxes(title_text = "ATR", row=5, col=1)
+    return fig
+
+
+def main():
+    btc = fetch_crypto_data('BTC-USD')
+    btc = calculate_technical_indicators(btc)
+    btc = calculate_bollinger_bands(btc)
+    btc = calculate_rsi(btc)
+    btc = calculate_macd(btc)
+    btc = calculate_atr(btc)
+
+    btc, btc_resistance_levels, btc_support_levels = identify_support_resistance(btc)
+    print_values(btc, btc_resistance_levels, btc_support_levels)
+
+    fig = create_comprehensive_chart()
+    add_price_chart(fig, btc)
+    add_support_resistance(fig, btc, btc_resistance_levels, btc_support_levels)
+    add_volume_chart(fig, btc)
+    add_rsi_chart(fig, btc)
+    add_macd_chart(fig, btc)
+    add_atr_chart(fig, btc)
+    fig = finalize_chart(fig)
+    fig.show()
+
+
+if __name__ == "__main__":
+    main()
