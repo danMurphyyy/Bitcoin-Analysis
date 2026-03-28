@@ -15,7 +15,7 @@ pd.set_option('display.precision', 4)
 #fetch crypto data
 def fetch_crypto_data(symbol) -> pd.DataFrame:
     start_date = (datetime.now() - timedelta(days=365)).date().isoformat()
-    crypto_data = obb.crypto.price.historical(
+    crypto_data = obb.crypto.price.historical(  # type: ignore
         symbol,
         provider='yfinance',
         start_date=start_date
@@ -75,7 +75,7 @@ def calculate_atr(df, period=14) -> pd.DataFrame:
     return df
 
 #identify support and resistance levels
-def identify_support_resistance(df) -> pd.DataFrame, list, list:
+def identify_support_resistance(df) -> tuple[pd.DataFrame, list, list]:
     peaks_high, _ = find_peaks(df['High'], distance=20, prominence=df['High'].std())
     peaks_low, _ = find_peaks(-df['Low'], distance=20, prominence=df['Low'].std())
 
